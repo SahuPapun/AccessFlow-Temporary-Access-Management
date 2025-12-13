@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isAdmin() {
+      return isSignedIn() && getUserData().role == 'admin';
+    }
+    function isApprover() {
+      return isSignedIn() && (getUserData().role == 'approver' || getUserData().role == 'admin');
+    }
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if false;
+    }
+    match /resources/{resourceId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+    match /access_requests/{accessRequestId} {
+      allow get: if isSignedIn() && (resource.data.requestorId == request.auth.uid || isApprover());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.requestorId == request.auth.uid;
+      allow update: if isSignedIn() && (isApprover() || (resource.data.requestorId == request.auth.uid && resource.data.status == 'pending'));
+      allow delete: if isSignedIn() && resource.data.requestorId == request.auth.uid && resource.data.status == 'pending';
+    }
+    match /audit_logs/{auditLogId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}
