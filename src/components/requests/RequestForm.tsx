@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '../ui/slider';
-import { addDocumentNonBlocking, useAuth, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { addDocumentNonBlocking, useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Resource } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export function RequestForm() {
   const [resourceId, setResourceId] = useState('');
@@ -85,7 +86,7 @@ export function RequestForm() {
           <Skeleton className="h-10 w-full" />
         ) : (
           <Select value={resourceId} onValueChange={setResourceId} disabled={isSubmitting}>
-            <SelectTrigger id="resourceId" placeholder="Select a resource...">
+            <SelectTrigger id="resourceId">
               <SelectValue placeholder="Select a resource..." />
             </SelectTrigger>
             <SelectContent>
